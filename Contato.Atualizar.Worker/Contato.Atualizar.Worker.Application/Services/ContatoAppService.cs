@@ -16,12 +16,7 @@ public class ContatoAppService : IContatoAppService
     
     public Task AtualizarContato(AtualizarContatoDto dto)
     {
-        //var contatoAtualizar = _contatoRepository.ObterPorID(dto.Id);
-
-        //if (contatoAtualizar == null)
-          //  throw new Exception("Contato não encontrado");
-
-
+       
         var contato = new ContatoEntity();
         
         contato.SetId(dto.Id);

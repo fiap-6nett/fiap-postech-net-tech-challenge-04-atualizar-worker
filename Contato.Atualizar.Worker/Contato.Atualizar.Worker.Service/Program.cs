@@ -6,6 +6,9 @@ using Contato.Atualizar.Worker.Infra.Mensageria.Consumer;
 using Contato.Atualizar.Worker.Infra.Repositories;
 using Contato.Atualizar.Worker.Service;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using RabbitMQ.Client;
 
@@ -18,6 +21,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         
         services.Configure<MongoDbSettings>(configuration.GetSection("MongoDb"));
         
+        BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+
         services.AddSingleton<IMongoClient>(sp =>
         {
             var mongoDbSettings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;

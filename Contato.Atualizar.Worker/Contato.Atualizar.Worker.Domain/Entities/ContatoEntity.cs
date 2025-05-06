@@ -7,7 +7,7 @@ namespace Contato.Atualizar.Worker.Domain.Entities;
 
 public class ContatoEntity
 {
-    [BsonGuidRepresentation(GuidRepresentation.Standard)]
+    [BsonId]
     public Guid Id { get; private set; }
     public string Nome {get; private set;}
     public string Telefone { get; private set; }

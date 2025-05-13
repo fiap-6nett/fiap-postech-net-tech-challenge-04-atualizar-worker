@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: worker
+        image: rafaelssouza108/worker.atualizar:1.0 
+        env:
+        - name: MONGODB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: mongo-credentials  # Nome do Secret que contém as credenciais MongoDB
+              key: MONGODB_HOST
+        - name: MONGODB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mongo-credentials  # Nome do Secret que contém as credenciais MongoDB
+              key: MONGODB_DATABASE
+        - name: RabbitMq__Host
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-credentials  # Nome do Secret do RabbitMQ
+              key: RABBITMQ_HOST
+        - name: RabbitMq__Username
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-credentials  # Nome do Secret do RabbitMQ
+              key: RABBITMQ_USERNAME
+        - name: RabbitMq__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-credentials  # Nome do Secret do RabbitMQ
+              key: RABBITMQ_PASSWORD
+        - name: RabbitMq__VirtualHost
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-credentials  # Nome do Secret do RabbitMQ
+              key: RABBITMQ_VIRTUALHOST
+        - name: RabbitMq__Queue
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-credentials  # Nome do Secret do RabbitMQ
+              key: RABBITMQ_QUEUENAME
+        ports:
+        - containerPort: 8081  # Altere a porta, se necessário

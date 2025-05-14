@@ -14,7 +14,7 @@ public class ContatoRepository : IContatoRepository
     public ContatoRepository(IMongoClient mongoClient, IOptions<MongoDbSettings> mongoDbSettings)
     {
         var database = mongoClient.GetDatabase(mongoDbSettings.Value.Database);
-        _contatos = database.GetCollection<ContatoEntity>("Contatos"); 
+        _contatos = database.GetCollection<ContatoEntity>("contatos"); 
     }
     
     public ContatoEntity ObterPorID(Guid id)
@@ -36,7 +36,9 @@ public class ContatoRepository : IContatoRepository
 
             if (existingContato == null)
             {
-                throw new Exception("Contato não encontrado.");
+                Console.WriteLine($"Contato com ID {contato.Id} não encontrado");
+
+                return;
             }
             
             var filter = Builders<ContatoEntity>.Filter.Eq(c => c.Id, contato.Id);
@@ -50,7 +52,7 @@ public class ContatoRepository : IContatoRepository
         }
         catch (Exception ex)
         {
-            throw new Exception($"Falha ao atualizar o contato. Erro {ex.Message}");
+            Console.WriteLine($"Falha {ex.Message}");
         }
        
     }

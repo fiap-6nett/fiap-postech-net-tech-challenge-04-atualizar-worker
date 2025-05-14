@@ -21,6 +21,11 @@ IHost host = Host.CreateDefaultBuilder(args)
         
         services.Configure<MongoDbSettings>(configuration.GetSection("MongoDb"));
         
+        var stringMongo = configuration.GetSection("MongoDb:ConnectionString").Value;
+        var baseMongo = configuration.GetSection("MongoDb:Database").Value;
+        
+        Console.WriteLine($"MongoDB connection string: {stringMongo} | Basemongo: {baseMongo}");
+        
         BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
         services.AddSingleton<IMongoClient>(sp =>

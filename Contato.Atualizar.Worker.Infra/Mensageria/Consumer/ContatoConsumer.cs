@@ -1,18 +1,20 @@
-using System.Text;
-using Contato.Atualizar.Worker.Application.Dtos;
 using Contato.Atualizar.Worker.Application.Interfaces;
+using Contato.Atualizar.Worker.Infra.Mensageria.Consumer;
+using Microsoft.Extensions.Configuration;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Newtonsoft.Json;
-using Microsoft.Extensions.Configuration;
-
-namespace Contato.Atualizar.Worker.Infra.Mensageria.Consumer;
+using System.Text;
+using Contato.Atualizar.Worker.Application.Dtos;
 
 public class ContatoConsumer : IContatoConsumer, IDisposable
 {
     private readonly IModel _channel;
     private readonly IConnection _connection;
     private readonly IContatoAppService _appService;
+    private readonly string _queueName;
+    private bool _consumingStarted = false;
+    private EventingBasicConsumer? _consumer;
 
     public ContatoConsumer(IContatoAppService appService, IConfiguration configuration, IConnection rabbitConnection)
     {
@@ -20,20 +22,27 @@ public class ContatoConsumer : IContatoConsumer, IDisposable
         _connection = rabbitConnection;
         _channel = _connection.CreateModel();
 
-        var queueName = configuration["RabbitMQ:QueueName"] ?? "atualizacao-contato";
+        _queueName = configuration["RabbitMQ:QueueName"] ?? "atualizacao-contato";
 
-        _channel.QueueDeclare(queue: queueName,
+        _channel.QueueDeclare(
+            queue: _queueName,
             durable: true,
             exclusive: false,
             autoDelete: false,
             arguments: null);
+
+        // Define que só uma mensagem por vez será entregue ao consumidor
+        _channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
     }
 
     public void StartConsuming(CancellationToken cancellationToken)
     {
-        var consumer = new EventingBasicConsumer(_channel);
+        if (_consumingStarted)
+            return;
 
-        consumer.Received += (model, ea) =>
+        _consumer = new EventingBasicConsumer(_channel);
+
+        _consumer.Received += (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
@@ -45,13 +54,25 @@ public class ContatoConsumer : IContatoConsumer, IDisposable
             _appService.AtualizarContato(dto);
         };
 
-        
-        _channel.BasicConsume(queue: "atualizacao-contato", autoAck: true, consumer: consumer);
+        _channel.BasicConsume(
+            queue: _queueName,
+            autoAck: true,
+            consumer: _consumer);
+
+        _consumingStarted = true;
     }
 
     public void Dispose()
     {
-        _channel?.Dispose();
-        _connection?.Dispose();
+        try
+        {
+            _consumer?.Model?.Close();
+            _channel?.Close();
+            _connection?.Close();
+        }
+        catch
+        {
+            // Evita exceções se já estiver fechado
+        }
     }
 }
